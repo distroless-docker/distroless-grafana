@@ -1,7 +1,7 @@
 FROM debian:buster as builder
 
-ARG ARCH=arm64
-ARG GRAFANAARCH=arm64
+ARG ARCH=amd64
+ARG GRAFANAARCH=amd64
 ARG VERSION=7.5.4
 
 RUN mkdir /work && mkdir /work/sources && mkdir /work/debs
@@ -40,7 +40,7 @@ RUN cp /grafana-${VERSION}/LICENSE /work/licenses/grafana-${VERSION}
 
 FROM scratch as image
 
-ARG GRAFANAVERSION=7.5.4
+ARG VERSION=7.5.4
 
 COPY --from=builder /grafana-${VERSION} /grafana
 COPY --from=builder /work/out /
