@@ -30,6 +30,22 @@ RUN dpkg --add-architecture ${ARCH} && \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf *.tar.xz && rm -rf *.dsc
         
+
+ENV PKG=ca-certificates
+RUN dpkg --add-architecture ${ARCH} && \
+    apt-get update && \
+    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do wget $(apt-get install --reinstall --print-uris -qq $f | cut -d"'" -f2); done \
+    && rm -rf /var/lib/apt/lists/* \
+    && for f in ./*.deb; do dpkg -x $f out; done \
+    && for f in ./*.deb; do cp $f debs/; done \
+    && rm -rf *.deb
+RUN dpkg --add-architecture ${ARCH} && \
+    apt-get update && \
+    apt-get source --print-uris -qq gcc-8-base | cut -d"'" -f2 && \
+    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do echo $(apt-get source --print-uris -qq $f | cut -d"'" -f2) && wget $(apt-get source --print-uris -qq $f | cut -d"'" -f2) -P sources/ || true; done \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf *.tar.xz && rm -rf *.dsc
+
 RUN mkdir licenses && for f in $(find /work/out/usr/share/doc/*/copyright -type f); do cp $f licenses/$(basename $(dirname $f))-$(find /work/debs | grep $(basename $(dirname $f)) | awk -F_ '{print $2}' | sed "s/-/_/"); done
 
 WORKDIR /
