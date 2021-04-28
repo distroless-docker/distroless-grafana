@@ -38,7 +38,7 @@ RUN wget https://dl.grafana.com/oss/release/grafana-${VERSION}.linux-${GRAFANAAR
 RUN tar -zxvf grafana-${VERSION}.linux-${GRAFANAARCH}.tar.gz
 RUN cp /grafana-${VERSION}/LICENSE /work/licenses/grafana-${VERSION}
 
-RUN mkdir -p /grafana/data && chmod -R 65534:65534 /grafana
+RUN mkdir -p /grafana/data && chown -R 65534:65534 /grafana
 
 FROM scratch as image
 
