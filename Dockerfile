@@ -30,7 +30,7 @@ RUN dpkg --add-architecture ${ARCH} && \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf *.tar.xz && rm -rf *.dsc
         
-RUN mkdir licenses && for f in $(find /work/out/usr/share/doc/*/copyright -type f); do cp $f licenses/$(basename $(dirname $f)); done
+RUN mkdir licenses && for f in $(find /work/out/usr/share/doc/*/copyright -type f); do cp $f licenses/$(basename $(dirname $f) | sed "s/-/_/")-$(find /work/debs | grep $(basename $(dirname $f)) | awk -F_ '{print $2}' | sed "s/-/_/"); done
 
 WORKDIR /
 
