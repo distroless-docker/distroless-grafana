@@ -25,7 +25,7 @@ RUN dpkg --add-architecture ${ARCH} && \
     && rm -rf *.deb
 RUN dpkg --add-architecture ${ARCH} && \
     apt-get update && \
-    apt-get source --print-uris -qq gcc-8-base | cut -d"'" -f2 && \
+    apt-get source --print-uris -qq $PKG | cut -d"'" -f2 && \
     for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do echo $(apt-get source --print-uris -qq $f | cut -d"'" -f2) && wget $(apt-get source --print-uris -qq $f | cut -d"'" -f2) -P sources/ || true; done \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf *.tar.xz && rm -rf *.dsc
@@ -34,15 +34,14 @@ RUN dpkg --add-architecture ${ARCH} && \
 ENV PKG=ca-certificates
 RUN dpkg --add-architecture ${ARCH} && \
     apt-get update && \
-    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do wget $(apt-get install --reinstall --print-uris -qq $f | cut -d"'" -f2); done \
+    wget $(apt-get install --reinstall --allow-remove-essential --print-uris -qq $PKG | cut -d"'" -f2) \
     && rm -rf /var/lib/apt/lists/* \
     && for f in ./*.deb; do dpkg -x $f out; done \
     && for f in ./*.deb; do cp $f debs/; done \
     && rm -rf *.deb
 RUN dpkg --add-architecture ${ARCH} && \
     apt-get update && \
-    apt-get source --print-uris -qq gcc-8-base | cut -d"'" -f2 && \
-    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do echo $(apt-get source --print-uris -qq $f | cut -d"'" -f2) && wget $(apt-get source --print-uris -qq $f | cut -d"'" -f2) -P sources/ || true; done \
+    wget $(apt-get source --print-uris -qq $PKG | cut -d"'" -f2) -P sources/ || true \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf *.tar.xz && rm -rf *.dsc
 
