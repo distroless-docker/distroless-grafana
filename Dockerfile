@@ -30,21 +30,6 @@ RUN dpkg --add-architecture ${ARCH} && \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf *.tar.xz && rm -rf *.dsc
         
-
-ENV PKG=ca-certificates
-RUN dpkg --add-architecture ${ARCH} && \
-    apt-get update && \
-    wget $(apt-get install --reinstall --allow-remove-essential --print-uris -qq $PKG | cut -d"'" -f2) \
-    && rm -rf /var/lib/apt/lists/* \
-    && for f in ./*.deb; do dpkg -x $f out; done \
-    && for f in ./*.deb; do cp $f debs/; done \
-    && rm -rf *.deb
-RUN dpkg --add-architecture ${ARCH} && \
-    apt-get update && \
-    wget $(apt-get source --print-uris -qq $PKG | cut -d"'" -f2) -P sources/ || true \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf *.tar.xz && rm -rf *.dsc
-
 RUN mkdir licenses && for f in $(find /work/out/usr/share/doc/*/copyright -type f); do cp $f licenses/$(basename $(dirname $f))-$(find /work/debs | grep $(basename $(dirname $f)) | awk -F_ '{print $2}' | sed "s/-/_/"); done
 
 WORKDIR /
@@ -61,6 +46,7 @@ ARG VERSION=7.5.4
 USER 65534:65534
 COPY --from=builder /grafana-${VERSION} /grafana
 COPY --from=builder /work/out /
+COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 COPY --from=builder /work/licenses /licenses
 
 EXPOSE 3000
