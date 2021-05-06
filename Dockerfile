@@ -18,17 +18,17 @@ RUN apt-get update && apt-get -y install \
 ENV PKG=libc6
 RUN dpkg --add-architecture ${ARCH} && \
     apt-get update && \
-    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do wget $(apt-get install --reinstall --print-uris -qq $f | cut -d"'" -f2); done \
+    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: .*//' | sed 's/<.*>//' | sed -e 's/^[ \t]*//' | sort --unique); do echo $(apt-get -y install --print-uris --reinstall --no-install-recommends $f |  grep -E 'https://|http://' | tr -d "'" | awk '{print$1}'); done > packages && \
+    cat packages | sed 's/ /\n/g' | sort --unique | wget -i - \
     && rm -rf /var/lib/apt/lists/* \
     && for f in ./*.deb; do dpkg -x $f out; done \
     && for f in ./*.deb; do cp $f debs/; done \
     && rm -rf *.deb
 RUN dpkg --add-architecture ${ARCH} && \
     apt-get update && \
-    apt-get source --print-uris -qq $PKG | cut -d"'" -f2 && \
-    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: //' | sort --unique); do echo $(apt-get source --print-uris -qq $f | cut -d"'" -f2) && wget $(apt-get source --print-uris -qq $f | cut -d"'" -f2) -P sources/ || true; done \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf *.tar.xz && rm -rf *.dsc
+    for f in $(apt-cache depends $PKG:${ARCH} -qq --recurse --no-pre-depends --no-recommends --no-suggests --no-conflicts --no-breaks --no-replaces --no-enhances | sed 's/.*: .*//' | sed 's/<.*>//' | sed -e 's/^[ \t]*//' | sort --unique); do echo $f && echo $(apt-get source --print-uris $f |  grep -E 'https://|http://' | tr -d "'" | awk '{print$1}'); done > packages && cat packages && \
+    cat packages | sed 's/ /\n/g' | sort --unique | wget -P sources/ -i - || true \
+    && rm -rf /var/lib/apt/lists/*
         
 RUN mkdir licenses && for f in $(find /work/out/usr/share/doc/*/copyright -type f); do cp $f licenses/$(basename $(dirname $f))-$(find /work/debs | grep $(basename $(dirname $f)) | awk -F_ '{print $2}' | sed "s/-/_/"); done
 
@@ -39,6 +39,9 @@ RUN tar -zxvf grafana-${VERSION}.linux-${GRAFANAARCH}.tar.gz
 RUN cp /grafana-${VERSION}/LICENSE /work/licenses/grafana-${VERSION}
 
 RUN mkdir -p /grafana-${VERSION}/data && chown -R 65534:65534 /grafana-${VERSION}
+
+FROM scratch as image-sources
+COPY --from=builder /work/sources /
 
 FROM scratch as image
 
